@@ -248,6 +248,33 @@
             box-shadow: 0 8px 30px rgba(0,0,0,0.3);
         }
         
+        .stat-card.clickable {
+            cursor: pointer;
+        }
+        
+        .stat-card.clickable:hover {
+            border-color: var(--primary-light);
+        }
+        
+        .stat-card.clickable::after {
+            content: '点击查看详情';
+            position: absolute;
+            bottom: 8px;
+            right: 12px;
+            font-size: 11px;
+            color: var(--primary-light);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .stat-card.clickable {
+            position: relative;
+        }
+        
+        .stat-card.clickable:hover::after {
+            opacity: 0.7;
+        }
+        
         .stat-card.danger {
             border-color: rgba(239, 68, 68, 0.3);
             background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(45, 45, 63, 0.6));
@@ -988,7 +1015,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" data-page="dynamics">
+                    <a class="nav-link" data-page="dynamic">
                         <i class="fas fa-exchange-alt"></i>
                         <span>编制动态</span>
                         <span class="nav-badge">3</span>
@@ -1056,7 +1083,7 @@
                         <p>项目整体超编 <strong>8人</strong>，其中研发部超编5人、美术部超编3人，请及时处理</p>
                     </div>
                     <div class="alert-action">
-                        <button class="btn btn-outline" onclick="switchPage('dynamics')">
+                        <button class="btn btn-outline" onclick="switchPage('dynamic')">
                             查看详情 <i class="fas fa-arrow-right"></i>
                         </button>
                     </div>
@@ -1064,7 +1091,7 @@
 
                 <!-- 统计卡片 -->
                 <div class="stats-grid">
-                    <div class="stat-card">
+                    <div class="stat-card clickable" onclick="showDetailModal('current')">
                         <div class="stat-header">
                             <div class="stat-icon blue">
                                 <i class="fas fa-users"></i>
@@ -1074,7 +1101,7 @@
                         <div class="stat-value">156</div>
                         <div class="stat-label">当前在编人数</div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card clickable" onclick="showDetailModal('limit')">
                         <div class="stat-header">
                             <div class="stat-icon green">
                                 <i class="fas fa-clipboard-check"></i>
@@ -1084,7 +1111,7 @@
                         <div class="stat-value">148</div>
                         <div class="stat-label">编制上限</div>
                     </div>
-                    <div class="stat-card danger">
+                    <div class="stat-card danger clickable" onclick="showDetailModal('over')">
                         <div class="stat-header">
                             <div class="stat-icon red">
                                 <i class="fas fa-exclamation-circle"></i>
@@ -1094,7 +1121,7 @@
                         <div class="stat-value" style="color: #EF4444;">+8</div>
                         <div class="stat-label">超编人数</div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card clickable" onclick="showDetailModal('newjoin')">
                         <div class="stat-header">
                             <div class="stat-icon purple">
                                 <i class="fas fa-user-plus"></i>
@@ -1133,7 +1160,7 @@
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">最近动态</h3>
-                            <span class="card-action" onclick="switchPage('dynamics')">查看全部 →</span>
+                            <span class="card-action" onclick="switchPage('dynamic')">查看全部 →</span>
                         </div>
                         <ul class="activity-list" id="activityList">
                             <!-- 动态填充 -->
@@ -1163,7 +1190,7 @@
             </div>
 
             <!-- 编制动态页面 -->
-            <div id="page-dynamics" class="page">
+            <div id="page-dynamic" class="page">
                 <div class="page-header">
                     <div>
                         <h1 class="page-title">编制动态</h1>
@@ -1340,7 +1367,7 @@
                         <p class="page-subtitle">配置各部门编制上限与人员分配</p>
                     </div>
                     <div class="header-actions">
-                        <button class="btn btn-primary" onclick="showDeptModal()">
+                        <button class="btn btn-primary" onclick="alert('新增部门功能开发中')">
                             <i class="fas fa-plus"></i> 新增部门
                         </button>
                     </div>
@@ -1606,7 +1633,34 @@
         </div>
     </div>
 
+    <!-- 详情弹窗 -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content" style="width: 800px; max-height: 80vh;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="detailModalTitle">详情</h3>
+                <button class="modal-close" onclick="closeModal('detailModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="detailModalBody" style="max-height: 60vh; overflow-y: auto;">
+                <!-- 动态内容 -->
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
+                <button type="button" class="btn btn-outline" onclick="closeModal('detailModal')">关闭</button>
+                <button type="button" class="btn btn-primary" onclick="exportDetailList()">
+                    <i class="fas fa-download"></i> 导出列表
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // 全局错误捕获 - 帮助诊断问题
+        window.onerror = function(msg, url, line, col, error) {
+            alert('JavaScript错误:\n' + msg + '\n行号: ' + line);
+            return false;
+        };
+        
         // 模拟数据
         const departments = [
             { name: '研发部', icon: 'fa-code', color: '#3B82F6', current: 50, limit: 45, leader: '张伟' },
@@ -1647,20 +1701,229 @@
             { type: 'leave', title: '王十四 离职', desc: '测试部测试工程师离职', date: '2026-04-03', dept: '测试部' },
         ];
 
+        // 全部人员详细数据
+        const allPersonnel = [
+            { id: 1, name: '张三', dept: '研发部', position: '高级前端工程师', joinDate: '2023-03-15', status: '在职' },
+            { id: 2, name: '李四', dept: '研发部', position: '后端工程师', joinDate: '2023-05-20', status: '在职' },
+            { id: 3, name: '王五', dept: '研发部', position: '测试工程师', joinDate: '2024-01-10', status: '在职' },
+            { id: 4, name: '赵六', dept: '美术部', position: '3D美术师', joinDate: '2023-08-01', status: '在职' },
+            { id: 5, name: '孙七', dept: '美术部', position: 'UI设计师', joinDate: '2023-09-15', status: '在职' },
+            { id: 6, name: '周八', dept: '策划部', position: '系统策划', joinDate: '2023-04-01', status: '在职' },
+            { id: 7, name: '吴九', dept: '策划部', position: '数值策划', joinDate: '2024-02-01', status: '在职' },
+            { id: 8, name: '郑十', dept: '运营部', position: '运营专员', joinDate: '2023-06-01', status: '在职' },
+            { id: 9, name: '周九', dept: '研发部', position: '前端工程师', joinDate: '2026-04-10', status: '在职' },
+            { id: 10, name: '吴十', dept: '美术部', position: '3D美术师', joinDate: '2026-04-10', status: '在职' },
+            { id: 11, name: '赵十三', dept: '策划部', position: '数值策划', joinDate: '2026-04-07', status: '在职' },
+            { id: 12, name: '陈一', dept: '研发部', position: '架构师', joinDate: '2022-01-15', status: '在职' },
+            { id: 13, name: '林二', dept: '研发部', position: 'DevOps工程师', joinDate: '2022-06-01', status: '在职' },
+            { id: 14, name: '黄三', dept: '测试部', position: '测试主管', joinDate: '2022-03-01', status: '在职' },
+            { id: 15, name: '刘四', dept: '研发部', position: 'iOS工程师', joinDate: '2023-11-01', status: '在职' },
+            { id: 16, name: '杨五', dept: '研发部', position: 'Android工程师', joinDate: '2023-12-15', status: '在职' },
+        ];
+
+        // 本月新入职人员
+        const newJoinPersonnel = [
+            { id: 9, name: '周九', dept: '研发部', position: '前端工程师', joinDate: '2026-04-10', status: '新入职' },
+            { id: 10, name: '吴十', dept: '美术部', position: '3D美术师', joinDate: '2026-04-10', status: '新入职' },
+            { id: 11, name: '赵十三', dept: '策划部', position: '数值策划', joinDate: '2026-04-07', status: '新入职' },
+            { id: 17, name: '钱十五', dept: '研发部', position: '后端工程师', joinDate: '2026-04-05', status: '新入职' },
+            { id: 18, name: '孙十六', dept: '美术部', position: '原画师', joinDate: '2026-04-03', status: '新入职' },
+            { id: 19, name: '李十七', dept: '运营部', position: '活动策划', joinDate: '2026-04-02', status: '新入职' },
+            { id: 20, name: '王十八', dept: '研发部', position: '服务端工程师', joinDate: '2026-04-01', status: '新入职' },
+            { id: 21, name: '张十九', dept: '测试部', position: '自动化测试', joinDate: '2026-04-01', status: '新入职' },
+            { id: 22, name: '刘二十', dept: '策划部', position: '关卡策划', joinDate: '2026-04-01', status: '新入职' },
+            { id: 23, name: '陈廿一', dept: '研发部', position: 'Unity工程师', joinDate: '2026-04-01', status: '新入职' },
+            { id: 24, name: '林廿二', dept: '美术部', position: '特效师', joinDate: '2026-04-01', status: '新入职' },
+            { id: 25, name: '黄廿三', dept: '研发部', position: '引擎工程师', joinDate: '2026-04-01', status: '新入职' },
+        ];
+
+        // 超编部门人员（研发部超5人，美术部超3人）
+        const overLimitPersonnel = [
+            { dept: '研发部', overCount: 5, limit: 45, current: 50, members: [
+                { name: '周九', position: '前端工程师', joinDate: '2026-04-10' },
+                { name: '钱十五', position: '后端工程师', joinDate: '2026-04-05' },
+                { name: '王十八', position: '服务端工程师', joinDate: '2026-04-01' },
+                { name: '陈廿一', position: 'Unity工程师', joinDate: '2026-04-01' },
+                { name: '黄廿三', position: '引擎工程师', joinDate: '2026-04-01' },
+            ]},
+            { dept: '美术部', overCount: 3, limit: 30, current: 33, members: [
+                { name: '吴十', position: '3D美术师', joinDate: '2026-04-10' },
+                { name: '孙十六', position: '原画师', joinDate: '2026-04-03' },
+                { name: '林廿二', position: '特效师', joinDate: '2026-04-01' },
+            ]},
+        ];
+
+        // 显示详情弹窗
+        function showDetailModal(type) {
+            const modal = document.getElementById('detailModal');
+            const title = document.getElementById('detailModalTitle');
+            const body = document.getElementById('detailModalBody');
+            
+            let html = '';
+            
+            switch(type) {
+                case 'current':
+                    title.innerHTML = '<i class="fas fa-users" style="color: #4F46E5; margin-right: 8px;"></i>当前在编人数 - 156人';
+                    html = `
+                        <div style="margin-bottom: 16px;">
+                            <span style="color: #94A3B8;">按部门分布：</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">
+                            ${departments.map(d => `
+                                <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 24px; font-weight: 600; color: ${d.color};">${d.current}</div>
+                                    <div style="font-size: 13px; color: #94A3B8;">${d.name}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div style="margin-bottom: 12px; color: #94A3B8; font-size: 14px;">人员列表（部分展示）：</div>
+                        <table class="data-table">
+                            <thead>
+                                <tr><th>姓名</th><th>部门</th><th>职位</th><th>入职日期</th><th>状态</th></tr>
+                            </thead>
+                            <tbody>
+                                ${allPersonnel.map(p => `
+                                    <tr>
+                                        <td><strong>${p.name}</strong></td>
+                                        <td>${p.dept}</td>
+                                        <td>${p.position}</td>
+                                        <td>${p.joinDate}</td>
+                                        <td><span class="status-badge normal">${p.status}</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                    break;
+                    
+                case 'limit':
+                    title.innerHTML = '<i class="fas fa-clipboard-check" style="color: #10B981; margin-right: 8px;"></i>编制上限 - 148人';
+                    html = `
+                        <div style="margin-bottom: 16px;">
+                            <span style="color: #94A3B8;">各部门编制配额：</span>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr><th>部门</th><th>编制上限</th><th>当前人数</th><th>剩余/超编</th><th>状态</th></tr>
+                            </thead>
+                            <tbody>
+                                ${departments.map(d => {
+                                    const diff = d.limit - d.current;
+                                    const status = diff < 0 ? 'danger' : diff <= 2 ? 'warning' : 'normal';
+                                    const statusText = diff < 0 ? '超编' : diff <= 2 ? '接近满编' : '正常';
+                                    return `
+                                        <tr>
+                                            <td><strong style="color: ${d.color};">${d.name}</strong></td>
+                                            <td>${d.limit}人</td>
+                                            <td>${d.current}人</td>
+                                            <td style="color: ${diff < 0 ? '#EF4444' : '#10B981'};">${diff < 0 ? diff : '+' + diff}人</td>
+                                            <td><span class="status-badge ${status}">${statusText}</span></td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                        <div style="margin-top: 16px; padding: 12px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);">
+                            <div style="color: #10B981; font-weight: 500;"><i class="fas fa-info-circle"></i> 编制说明</div>
+                            <div style="color: #94A3B8; font-size: 13px; margin-top: 8px;">编制上限由公司人力资源部统一核定，如需调整请提交扩编申请。</div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'over':
+                    title.innerHTML = '<i class="fas fa-exclamation-circle" style="color: #EF4444; margin-right: 8px;"></i>超编详情 - 共超编8人';
+                    html = `
+                        <div style="margin-bottom: 16px; padding: 12px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);">
+                            <div style="color: #EF4444; font-weight: 500;"><i class="fas fa-exclamation-triangle"></i> 超编预警</div>
+                            <div style="color: #94A3B8; font-size: 13px; margin-top: 8px;">当前有2个部门存在超编情况，共超编8人，请及时处理。</div>
+                        </div>
+                        ${overLimitPersonnel.map(dept => `
+                            <div style="margin-bottom: 20px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <span style="font-weight: 600; font-size: 15px;">${dept.dept}</span>
+                                    <span style="color: #EF4444; font-size: 14px;">超编 ${dept.overCount} 人（${dept.current}/${dept.limit}）</span>
+                                </div>
+                                <table class="data-table">
+                                    <thead>
+                                        <tr><th>姓名</th><th>职位</th><th>入职日期</th><th>备注</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        ${dept.members.map(m => `
+                                            <tr>
+                                                <td><strong>${m.name}</strong></td>
+                                                <td>${m.position}</td>
+                                                <td>${m.joinDate}</td>
+                                                <td><span class="status-badge danger">超编人员</span></td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `).join('')}
+                    `;
+                    break;
+                    
+                case 'newjoin':
+                    title.innerHTML = '<i class="fas fa-user-plus" style="color: #8B5CF6; margin-right: 8px;"></i>本月入职 - 12人';
+                    html = `
+                        <div style="margin-bottom: 16px;">
+                            <span style="color: #94A3B8;">2026年4月新入职人员：</span>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr><th>姓名</th><th>部门</th><th>职位</th><th>入职日期</th><th>状态</th></tr>
+                            </thead>
+                            <tbody>
+                                ${newJoinPersonnel.map(p => `
+                                    <tr>
+                                        <td><strong>${p.name}</strong></td>
+                                        <td>${p.dept}</td>
+                                        <td>${p.position}</td>
+                                        <td>${p.joinDate}</td>
+                                        <td><span class="status-badge" style="background: rgba(139, 92, 246, 0.2); color: #A78BFA;">新入职</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        <div style="margin-top: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                            <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 20px; font-weight: 600; color: #4F46E5;">5</div>
+                                <div style="font-size: 12px; color: #94A3B8;">研发部</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 20px; font-weight: 600; color: #F59E0B;">3</div>
+                                <div style="font-size: 12px; color: #94A3B8;">美术部</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 20px; font-weight: 600; color: #10B981;">4</div>
+                                <div style="font-size: 12px; color: #94A3B8;">其他部门</div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            body.innerHTML = html;
+            modal.classList.add('active');
+        }
+
+        // 导出详情列表
+        function exportDetailList() {
+            alert('导出功能开发中，敬请期待！');
+        }
+
         // 页面切换
         function switchPage(pageName) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
             
-            document.getElementById(`page-${pageName}`).classList.add('active');
-            document.querySelector(`[data-page="${pageName}"]`).classList.add('active');
+            const targetPage = document.getElementById(`page-${pageName}`);
+            if (!targetPage) { console.warn('页面不存在: ' + pageName); return; }
+            targetPage.classList.add('active');
+            
+            const targetNav = document.querySelector(`[data-page="${pageName}"]`);
+            if (targetNav) targetNav.classList.add('active');
         }
-
-        document.querySelectorAll('.nav-link[data-page]').forEach(link => {
-            link.addEventListener('click', () => {
-                switchPage(link.dataset.page);
-            });
-        });
 
         // 初始化部门表格
         function renderDeptTable() {
@@ -1734,14 +1997,16 @@
             `).join('');
         }
 
-        // 筛选器事件
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                renderTimeline(btn.dataset.filter);
+        // 初始化筛选器事件（在 DOMContentLoaded 中调用）
+        function initFilterButtons() {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderTimeline(btn.dataset.filter);
+                });
             });
-        });
+        }
 
         // 初始化人员表格
         function renderPersonnelTable(data = personnel) {
@@ -1958,26 +2223,6 @@
             });
         }
 
-        // 页面切换功能
-        function switchPage(pageName) {
-            // 隐藏所有页面
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.remove('active');
-            });
-            // 显示目标页面
-            const targetPage = document.getElementById('page-' + pageName);
-            if (targetPage) {
-                targetPage.classList.add('active');
-            }
-            // 更新导航菜单激活状态
-            document.querySelectorAll('.nav-link[data-page]').forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('data-page') === pageName) {
-                    link.classList.add('active');
-                }
-            });
-        }
-
         // 页面初始化
         document.addEventListener('DOMContentLoaded', () => {
             renderDeptTable();
@@ -1989,12 +2234,12 @@
             initUploadArea();
             initReportDates();
             refreshReportPreview();
+            initFilterButtons();
             
             // 绑定导航菜单点击事件
             document.querySelectorAll('.nav-link[data-page]').forEach(link => {
-                link.addEventListener('click', function() {
-                    const pageName = this.getAttribute('data-page');
-                    switchPage(pageName);
+                link.addEventListener('click', () => {
+                    switchPage(link.dataset.page);
                 });
             });
         });

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>测试页面</title>
+    <style>
+        body { background: #1a1a2e; color: white; padding: 50px; font-family: sans-serif; }
+        .btn { padding: 20px 40px; font-size: 18px; background: #4F46E5; color: white; border: none; border-radius: 8px; cursor: pointer; margin: 10px; }
+        .btn:hover { background: #6366F1; }
+        #result { margin-top: 30px; padding: 20px; background: #2d2d3f; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>按钮测试</h1>
+    <p>点击下面的按钮测试是否有响应：</p>
+    
+    <button class="btn" onclick="test1()">测试按钮1 (onclick)</button>
+    <button class="btn" id="btn2">测试按钮2 (addEventListener)</button>
+    <button class="btn" onclick="alert('弹窗测试')">测试按钮3 (alert)</button>
+    
+    <div id="result">等待点击...</div>
+    
+    <script>
+        function test1() {
+            document.getElementById('result').innerHTML = '✅ 按钮1 onclick 正常工作！时间: ' + new Date().toLocaleTimeString();
+            console.log('test1 被调用');
+        }
+        
+        document.getElementById('btn2').addEventListener('click', function() {
+            document.getElementById('result').innerHTML = '✅ 按钮2 addEventListener 正常工作！时间: ' + new Date().toLocaleTimeString();
+            console.log('btn2 被点击');
+        });
+        
+        console.log('脚本加载完成');
+    </script>
+</body>
+</html>
