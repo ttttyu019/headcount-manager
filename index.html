@@ -2246,7 +2246,7 @@
 
         // ==================== 数据导入功能 ====================
         let currentImportType = 'personnel';
-        let importData = null;
+        let importedDataCache = null;
 
         function showImportModal() {
             document.getElementById('importModal').classList.add('active');
@@ -2254,7 +2254,7 @@
         }
 
         function resetImportState() {
-            importData = null;
+            importedDataCache = null;
             document.getElementById('previewArea').style.display = 'none';
             document.getElementById('importBtn').disabled = true;
             document.getElementById('fileInput').value = '';
@@ -2311,7 +2311,7 @@
                         return;
                     }
                     
-                    importData = jsonData;
+                    importedDataCache = jsonData;
                     showPreview(jsonData);
                 } catch (error) {
                     alert('文件解析失败：' + error.message);
@@ -2378,7 +2378,7 @@
         }
 
         function executeImport() {
-            if (!importData || importData.length === 0) {
+            if (!importedDataCache || importedDataCache.length === 0) {
                 alert('没有可导入的数据');
                 return;
             }
@@ -2386,7 +2386,7 @@
             try {
                 switch (currentImportType) {
                     case 'personnel':
-                        importData.forEach(row => {
+                        importedDataCache.forEach(row => {
                             personnel.push({
                                 id: row['工号'] || row['id'] || '',
                                 name: row['姓名'] || row['name'] || '',
@@ -2400,7 +2400,7 @@
                         break;
                         
                     case 'department':
-                        importData.forEach(row => {
+                        importedDataCache.forEach(row => {
                             const existingIndex = departments.findIndex(d => d.name === (row['部门名称'] || row['name']));
                             const deptData = {
                                 name: row['部门名称'] || row['name'] || '',
@@ -2422,7 +2422,7 @@
                         
                     case 'dynamics':
                         const typeMap = { '入职': 'join', '离职': 'leave', '转岗': 'transfer', 'HC变动': 'hc' };
-                        importData.forEach(row => {
+                        importedDataCache.forEach(row => {
                             timelineData.unshift({
                                 type: typeMap[row['类型']] || row['type'] || 'join',
                                 title: row['标题'] || row['title'] || '',
@@ -2436,7 +2436,7 @@
                         break;
                 }
                 
-                alert(`成功导入 ${importData.length} 条数据！`);
+                alert(`成功导入 ${importedDataCache.length} 条数据！`);
                 closeModal('importModal');
                 updateStats();
             } catch (error) {
