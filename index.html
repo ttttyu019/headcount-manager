@@ -1095,48 +1095,10 @@
                     </div>
                 </div>
 
-                <!-- 统计卡片 -->
-                <div class="stats-grid">
-                    <div class="stat-card clickable" onclick="showDetailModal('current')">
-                        <div class="stat-header">
-                            <div class="stat-icon blue">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <span class="stat-trend up">+8</span>
-                        </div>
-                        <div class="stat-value">156</div>
-                        <div class="stat-label">当前在编人数</div>
-                    </div>
-                    <div class="stat-card clickable" onclick="showDetailModal('limit')">
-                        <div class="stat-header">
-                            <div class="stat-icon green">
-                                <i class="fas fa-clipboard-check"></i>
-                            </div>
-                            <span class="stat-trend neutral">--</span>
-                        </div>
-                        <div class="stat-value">148</div>
-                        <div class="stat-label">编制上限</div>
-                    </div>
-                    <div class="stat-card danger clickable" onclick="showDetailModal('over')">
-                        <div class="stat-header">
-                            <div class="stat-icon red">
-                                <i class="fas fa-exclamation-circle"></i>
-                            </div>
-                            <span class="stat-trend up">+3</span>
-                        </div>
-                        <div class="stat-value" style="color: #EF4444;">+8</div>
-                        <div class="stat-label">超编人数</div>
-                    </div>
-                    <div class="stat-card clickable" onclick="showDetailModal('newjoin')">
-                        <div class="stat-header">
-                            <div class="stat-icon purple">
-                                <i class="fas fa-user-plus"></i>
-                            </div>
-                            <span class="stat-trend down">-2</span>
-                        </div>
-                        <div class="stat-value">12</div>
-                        <div class="stat-label">本月入职</div>
-                    </div>
+                <!-- 统计卡片 - 动态渲染 -->
+                <div class="stats-grid" id="statsGrid">
+                    <!-- 由 JS 动态生成 -->
+                </div>
                 </div>
 
                 <div class="content-grid">
@@ -1339,11 +1301,12 @@
                             <option value="测试部">测试部</option>
                             <option value="运营部">运营部</option>
                         </select>
-                        <select class="form-select" style="width: 120px;" id="statusFilter" onchange="filterPersonnel()">
-                            <option value="">所有状态</option>
-                            <option value="在职">在职</option>
-                            <option value="试用期">试用期</option>
-                            <option value="待离职">待离职</option>
+                        <select class="form-select" style="width: 140px;" id="statusFilter" onchange="filterPersonnel()">
+                            <option value="">所有编制</option>
+                            <option value="formal">正编</option>
+                            <option value="outsource">外包</option>
+                            <option value="intern">实习</option>
+                            <option value="a_contract">A编</option>
                         </select>
                     </div>
                     <table class="data-table">
@@ -1354,7 +1317,8 @@
                                 <th>部门</th>
                                 <th>职位</th>
                                 <th>入职日期</th>
-                                <th>状态</th>
+                                <th>编制类型</th>
+                                <th>批次</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -1680,16 +1644,30 @@
             { name: '行政部', icon: 'fa-building', color: '#6B7280', current: 10, limit: 10, leader: '陈静' }
         ];
 
+        // 编制类型配置
+        const HEADCOUNT_TYPES = {
+            formal:    { label: '正编', color: '#3B82F6', bg: 'rgba(59,130,246,0.15)' },
+            outsource:  { label: '外包', color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
+            intern:     { label: '实习', color: '#8B5CF6', bg: 'rgba(139,92,246,0.15)' },
+            a_contract: { label: 'A编',  color: '#EC4899', bg: 'rgba(236,72,153,0.15)' }
+        };
+
         const personnel = [
-            { id: 'G001', name: '张三', dept: '研发部', position: '高级工程师', date: '2024-03-15', status: '在职' },
-            { id: 'G002', name: '李四', dept: '研发部', position: '工程师', date: '2025-01-10', status: '试用期' },
-            { id: 'G003', name: '王五', dept: '美术部', position: '原画师', date: '2024-06-20', status: '在职' },
-            { id: 'G004', name: '赵六', dept: '策划部', position: '系统策划', date: '2024-09-01', status: '在职' },
-            { id: 'G005', name: '钱七', dept: '测试部', position: '测试工程师', date: '2025-02-15', status: '试用期' },
-            { id: 'G006', name: '孙八', dept: '运营部', position: '运营专员', date: '2024-11-08', status: '在职' },
-            { id: 'G007', name: '周九', dept: '研发部', position: '前端工程师', date: '2026-03-01', status: '试用期' },
-            { id: 'G008', name: '吴十', dept: '美术部', position: '3D美术', date: '2026-04-01', status: '试用期' },
+            { id: 'G001', name: '张三', dept: '研发部', position: '高级工程师', date: '2024-03-15', headcountType: 'formal', batch: 'T1-2024Q1' },
+            { id: 'G002', name: '李四', dept: '研发部', position: '工程师', date: '2025-01-10', headcountType: 'formal', batch: 'T2-2024Q4' },
+            { id: 'G003', name: '王五', dept: '美术部', position: '原画师', date: '2024-06-20', headcountType: 'formal', batch: 'T1-2024Q2' },
+            { id: 'G004', name: '赵六', dept: '策划部', position: '系统策划', date: '2024-09-01', headcountType: 'a_contract', batch: 'A1-2024Q3' },
+            { id: 'G005', name: '钱七', dept: '测试部', position: '测试工程师', date: '2025-02-15', headcountType: 'outsource', batch: 'OS-2025Q1' },
+            { id: 'G006', name: '孙八', dept: '运营部', position: '运营专员', date: '2024-11-08', headcountType: 'formal', batch: 'T3-2024Q3' },
+            { id: 'G007', name: '周九', dept: '研发部', position: '前端工程师', date: '2026-03-01', headcountType: 'intern', batch: 'INT-2026Q1' },
+            { id: 'G008', name: '吴十', dept: '美术部', position: '3D美术', date: '2026-04-01', headcountType: 'outsource', batch: 'OS-2026Q2' },
         ];
+
+        // 获取编制类型标签HTML
+        function getHeadcountBadge(type) {
+            const t = HEADCOUNT_TYPES[type] || { label: type || '-', color: '#6B7280', bg: 'rgba(107,114,128,0.15)' };
+            return `<span class="hc-badge" style="background:${t.bg};color:${t.color};border:1px solid ${t.color}40;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;">${t.label}</span>`;
+        }
 
         const activities = [
             { type: 'join', title: '周九 入职', desc: '研发部 - 前端工程师', time: '今天 09:30' },
@@ -1770,20 +1748,43 @@
             
             let html = '';
             
+            // 按编制类型统计
+            function getTypeStats() {
+                const stats = {};
+                Object.keys(HEADCOUNT_TYPES).forEach(k => stats[k] = 0);
+                personnel.forEach(p => {
+                    if (p.headcountType && stats[p.headcountType] !== undefined) {
+                        stats[p.headcountType]++;
+                    } else if (p.headcountType) {
+                        stats[p.headcountType] = (stats[p.headcountType] || 0) + 1;
+                    }
+                });
+                return stats;
+            }
+
             switch(type) {
                 case 'current':
-                    title.innerHTML = '<i class="fas fa-users" style="color: #4F46E5; margin-right: 8px;"></i>当前在编人数 - 156人';
+                    const typeStats = getTypeStats();
+                    const totalCount = personnel.length;
+                    title.innerHTML = '<i class="fas fa-users" style="color: #4F46E5; margin-right: 8px;"></i>当前在编人数 - ' + totalCount + '人';
                     html = `
                         <div style="margin-bottom: 16px;">
-                            <span style="color: #94A3B8;">按部门分布：</span>
+                            <span style="color: #94A3B8;">按编制类型分布：</span>
                         </div>
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">
-                            ${departments.map(d => `
-                                <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; text-align: center;">
-                                    <div style="font-size: 24px; font-weight: 600; color: ${d.color};">${d.current}</div>
-                                    <div style="font-size: 13px; color: #94A3B8;">${d.name}</div>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;">
+                            ${Object.entries(HEADCOUNT_TYPES).map(([key, cfg]) => `
+                                <div style="background: ${cfg.bg}; border: 1px solid ${cfg.color}40; padding: 16px; border-radius: 10px; text-align: center;">
+                                    <div style="font-size: 28px; font-weight: 700; color: ${cfg.color};">${typeStats[key] || 0}</div>
+                                    <div style="font-size: 13px; color: ${cfg.color}; font-weight:600;">${cfg.label}</div>
+                                    <div style="font-size: 11px; color: #94A3B8; margin-top: 4px;">${totalCount > 0 ? Math.round(((typeStats[key]||0)/totalCount)*100) : 0}%</div>
                                 </div>
                             `).join('')}
+                        </div>
+                        <div style="margin-bottom: 12px;"><span style="color: #94A3B8;">按批次分布（最近5个批次）：</span></div>
+                        <div id="batchBreakdown" style="max-height:200px;overflow-y:auto;"></div>
+                    `;
+                    break;
+                case 'limit':
                         </div>
                         <div style="margin-bottom: 12px; color: #94A3B8; font-size: 14px;">人员列表（部分展示）：</div>
                         <table class="data-table">
@@ -1913,6 +1914,28 @@
             }
             
             body.innerHTML = html;
+            
+            // 如果是当前在编人数详情，渲染批次分布
+            if (type === 'current') {
+                const batchEl = document.getElementById('batchBreakdown');
+                if (batchEl) {
+                    const batchStats = {};
+                    personnel.forEach(p => {
+                        const b = p.batch || '未分配';
+                        batchStats[b] = (batchStats[b] || 0) + 1;
+                    });
+                    const sortedBatches = Object.entries(batchStats)
+                        .sort((a,b) => b[1] - a[1])
+                        .slice(0, 10);
+                    batchEl.innerHTML = sortedBatches.map(([batch, count]) => `
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:6px;margin-bottom:4px;">
+                            <span style="font-size:13px;font-weight:600;">${batch}</span>
+                            <span style="background:rgba(79,70,229,0.2);color:#818CF8;padding:2px 12px;border-radius:10px;font-size:12px;font-weight:600;">${count}人</span>
+                        </div>
+                    `).join('');
+                }
+            }
+            
             modal.classList.add('active');
         }
 
@@ -1934,10 +1957,21 @@
             if (targetNav) targetNav.classList.add('active');
         }
 
-        // 初始化部门表格
+        // 初始化部门表格（首页）
         function renderDeptTable() {
             const tbody = document.getElementById('deptTableBody');
             tbody.innerHTML = departments.map(dept => {
+                // 统计该部门的编制类型分布
+                const deptMembers = personnel.filter(p => p.dept === dept.name);
+                const deptTypeStats = {};
+                Object.keys(HEADCOUNT_TYPES).forEach(k => deptTypeStats[k] = 0);
+                deptMembers.forEach(p => { if (p.headcountType) deptTypeStats[p.headcountType]++; });
+                
+                const typeBadges = Object.entries(HEADCOUNT_TYPES)
+                    .filter(([k]) => (deptTypeStats[k] || 0) > 0)
+                    .map(([k, cfg]) => `<span style="font-size:11px;background:${cfg.bg};color:${cfg.color};padding:1px 8px;border-radius:8px;margin-left:4px;">${cfg.label}${deptTypeStats[k]}</span>`)
+                    .join('');
+                
                 const usage = Math.round((dept.current / dept.limit) * 100);
                 const status = usage > 100 ? 'danger' : usage > 90 ? 'warning' : 'normal';
                 const statusText = usage > 100 ? '超编' : usage > 90 ? '接近满编' : '正常';
@@ -1949,7 +1983,10 @@
                                 <div class="dept-icon" style="background: ${dept.color}20; color: ${dept.color};">
                                     <i class="fas ${dept.icon}"></i>
                                 </div>
-                                <span>${dept.name}</span>
+                                <div style="display:flex;flex-direction:column;gap:2px;">
+                                    <span>${dept.name}</span>
+                                    <div style="display:flex;">${typeBadges}</div>
+                                </div>
                             </div>
                         </td>
                         <td><strong>${dept.current}</strong></td>
@@ -2027,7 +2064,8 @@
                     <td>${p.dept}</td>
                     <td>${p.position}</td>
                     <td>${p.date}</td>
-                    <td><span class="status-badge ${p.status === '在职' ? 'normal' : p.status === '试用期' ? 'warning' : 'danger'}">${p.status}</span></td>
+                    <td>${getHeadcountBadge(p.headcountType)}</td>
+                    <td><span style="font-size:12px;color:var(--text-secondary);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:6px;">${p.batch || '-'}</span></td>
                     <td>
                         <div class="action-btns">
                             <button class="action-btn edit" title="编辑"><i class="fas fa-edit"></i></button>
@@ -2042,6 +2080,17 @@
         function renderDepartmentTable() {
             const tbody = document.getElementById('departmentTable');
             tbody.innerHTML = departments.map(dept => {
+                // 统计该部门的编制类型分布
+                const deptMembers = personnel.filter(p => p.dept === dept.name);
+                const deptTypeStats = {};
+                Object.keys(HEADCOUNT_TYPES).forEach(k => deptTypeStats[k] = 0);
+                deptMembers.forEach(p => { if (p.headcountType) deptTypeStats[p.headcountType]++; });
+                
+                const typeBadges = Object.entries(HEADCOUNT_TYPES)
+                    .filter(([k]) => (deptTypeStats[k] || 0) > 0)
+                    .map(([k, cfg]) => `<span style="font-size:11px;background:${cfg.bg};color:${cfg.color};padding:1px 8px;border-radius:8px;margin-left:4px;">${cfg.label}${deptTypeStats[k]}</span>`)
+                    .join('');
+                
                 const diff = dept.current - dept.limit;
                 const usage = Math.round((dept.current / dept.limit) * 100);
                 const status = diff > 0 ? 'danger' : diff === 0 ? 'warning' : 'normal';
@@ -2054,7 +2103,10 @@
                                 <div class="dept-icon" style="background: ${dept.color}20; color: ${dept.color};">
                                     <i class="fas ${dept.icon}"></i>
                                 </div>
-                                <span>${dept.name}</span>
+                                <div style="display:flex;flex-direction:column;gap:2px;">
+                                    <span>${dept.name}</span>
+                                    <div style="display:flex;">${typeBadges || '<span style=\"color:#6B7280;font-size:11px;\">暂无人员</span>'}</div>
+                                </div>
                             </div>
                         </td>
                         <td>${dept.leader}</td>
@@ -2086,15 +2138,15 @@
         function filterPersonnel() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             const dept = document.getElementById('deptFilter').value;
-            const status = document.getElementById('statusFilter').value;
+            const htype = document.getElementById('statusFilter').value;
             
             const filtered = personnel.filter(p => {
                 const matchSearch = p.name.toLowerCase().includes(search) || 
                                    p.id.toLowerCase().includes(search) || 
                                    p.dept.toLowerCase().includes(search);
                 const matchDept = !dept || p.dept === dept;
-                const matchStatus = !status || p.status === status;
-                return matchSearch && matchDept && matchStatus;
+                const matchType = !htype || p.headcountType === htype;
+                return matchSearch && matchDept && matchType;
             });
             
             renderPersonnelTable(filtered);
@@ -2118,10 +2170,12 @@
                 dept: document.getElementById('empDept').value,
                 position: document.getElementById('empPosition').value,
                 date: document.getElementById('empDate').value,
-                status: '试用期'
+                headcountType: 'formal',
+                batch: ''
             };
             personnel.unshift(newPerson);
             renderPersonnelTable();
+            renderStatsCards();
             closeModal('addModal');
             alert('人员添加成功！');
         }
@@ -2234,6 +2288,7 @@
 
         // 页面初始化
         document.addEventListener('DOMContentLoaded', () => {
+            renderStatsCards();
             renderDeptTable();
             renderActivityList();
             renderTimeline();
@@ -2281,7 +2336,7 @@
             
             // 更新上传提示文字
             const hints = {
-                personnel: '支持 Excel (.xlsx, .xls) 和 CSV 格式 | 必填：工号、姓名、部门',
+                personnel: '支持 Excel (.xlsx, .xls) 和 CSV 格式 | 必填：工号、姓名、部门、编制类型',
                 department: '支持 Excel (.xlsx, .xls) 和 CSV 格式 | 必填：部门名称、编制上限',
                 dynamics: '支持 Excel (.xlsx, .xls) 和 CSV 格式 | 必填：类型、标题、日期'
             };
@@ -2375,8 +2430,10 @@
             switch (currentImportType) {
                 case 'personnel':
                     templateData = [
-                        { '工号': 'G001', '姓名': '张三', '部门': '研发部', '职位': '高级工程师', '入职日期': '2024-03-15', '状态': '在职' },
-                        { '工号': 'G002', '姓名': '李四', '部门': '美术部', '职位': '原画师', '入职日期': '2024-06-20', '状态': '在职' }
+                        { '工号': 'G001', '姓名': '张三', '部门': '研发部', '职位': '高级工程师', '入职日期': '2024-03-15', '编制类型': '正编', '批次': 'T1-2024Q1' },
+                        { '工号': 'G002', '姓名': '李四', '部门': '美术部', '职位': '原画师', '入职日期': '2024-06-20', '编制类型': '外包', '批次': 'OS-2025Q1' },
+                        { '工号': 'G003', '姓名': '王五', '部门': '策划部', '职位': '系统策划', '入职日期': '2024-09-01', '编制类型': 'A编', '批次': 'A1-2024Q3' },
+                        { '工号': 'G004', '姓名': '赵六', '部门': '研发部', '职位': '前端工程师', '入职日期': '2026-03-01', '编制类型': '实习', '批次': 'INT-2026Q1' }
                     ];
                     fileName = '人员数据导入模板.xlsx';
                     break;
@@ -2411,14 +2468,19 @@
             try {
                 switch (currentImportType) {
                     case 'personnel':
+                        const typeLabelMap = { '正编':'formal', '外包':'outsource', '实习':'intern', 'A编':'a_contract' };
                         importedDataCache.forEach(row => {
+                            let htype = row['编制类型'] || row['headcountType'] || 'formal';
+                            // 支持中文名自动映射
+                            if (typeLabelMap[htype]) { htype = typeLabelMap[htype]; }
                             personnel.push({
                                 id: row['工号'] || row['id'] || '',
                                 name: row['姓名'] || row['name'] || '',
                                 dept: row['部门'] || row['dept'] || '',
                                 position: row['职位'] || row['position'] || '',
                                 date: row['入职日期'] || row['date'] || '',
-                                status: row['状态'] || row['status'] || '在职'
+                                headcountType: htype,
+                                batch: row['批次'] || row['batch'] || ''
                             });
                         });
                         renderPersonnelTable();
@@ -2463,7 +2525,7 @@
                 
                 alert(`成功导入 ${importedDataCache.length} 条数据！`);
                 closeModal('importModal');
-                updateStats();
+                renderStatsCards();
             } catch (error) {
                 alert('导入失败：' + error.message);
             }
@@ -2512,7 +2574,7 @@
             renderDepartmentTable();
             renderTimeline();
             renderActivityList();
-            updateStats();
+            renderStatsCards();
 
             alert('✅ 所有数据已清空！页面已恢复为初始状态。');
         }
@@ -2752,12 +2814,15 @@
             const wb = XLSX.utils.book_new();
             
             // 人员数据
+            const typeLabelMapR = { 'formal':'正编', 'outsource':'外包', 'intern':'实习', 'a_contract':'A编' };
             const personnelWS = XLSX.utils.json_to_sheet(personnel.map(p => ({
                 '工号': p.id,
                 '姓名': p.name,
                 '部门': p.dept,
                 '职位': p.position,
                 '入职日期': p.date,
+                '编制类型': typeLabelMapR[p.headcountType] || p.headcountType || '-',
+                '批次': p.batch || '',
                 '状态': p.status
             })));
             XLSX.utils.book_append_sheet(wb, personnelWS, '人员数据');
@@ -2788,7 +2853,93 @@
             XLSX.writeFile(wb, `编制数据导出_${date}.xlsx`);
         }
 
-        // 更新统计数据
+        // 动态渲染统计卡片（按编制类型拆分）
+        function renderStatsCards() {
+            const container = document.getElementById('statsGrid');
+            if (!container) return;
+            
+            const totalCurrent = departments.reduce((sum, d) => sum + d.current, 0);
+            const totalLimit = departments.reduce((sum, d) => sum + d.limit, 0);
+            const overCount = Math.max(0, totalCurrent - totalLimit);
+            
+            // 按编制类型统计
+            const typeStats = {};
+            Object.keys(HEADCOUNT_TYPES).forEach(k => typeStats[k] = 0);
+            personnel.forEach(p => {
+                if (p.headcountType && typeStats[p.headcountType] !== undefined) {
+                    typeStats[p.headcountType]++;
+                }
+            });
+            
+            let cardsHtml = '';
+            
+            // 1. 总人数卡片
+            const overTrend = overCount > 0 ? 'up' : overCount < 0 ? 'down' : 'neutral';
+            cardsHtml += `
+                <div class="stat-card clickable" onclick="showDetailModal('current')">
+                    <div class="stat-header">
+                        <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+                        <span class="stat-trend ${overTrend}">${overCount > 0 ? '+' + overCount : overCount}</span>
+                    </div>
+                    <div class="stat-value">${totalCurrent}</div>
+                    <div class="stat-label">当前总人数</div>
+                </div>`;
+            
+            // 2. 编制上限卡片
+            cardsHtml += `
+                <div class="stat-card clickable" onclick="showDetailModal('limit')">
+                    <div class="stat-header">
+                        <div class="stat-icon green"><i class="fas fa-clipboard-check"></i></div>
+                        <span class="stat-trend neutral">--</span>
+                    </div>
+                    <div class="stat-value">${totalLimit}</div>
+                    <div class="stat-label">编制上限</div>
+                </div>`;
+            
+            // 3. 超编/空缺卡片
+            if (overCount > 0) {
+                cardsHtml += `
+                    <div class="stat-card danger clickable" onclick="showDetailModal('over')">
+                        <div class="stat-header">
+                            <div class="stat-icon red"><i class="fas fa-exclamation-circle"></i></div>
+                        </div>
+                        <div class="stat-value" style="color: #EF4444;">+${overCount}</div>
+                        <div class="stat-label">超编人数</div>
+                    </div>`;
+            } else if (overCount < 0) {
+                cardsHtml += `
+                    <div class="stat-card clickable" onclick="showDetailModal('vacancy')">
+                        <div class="stat-header">
+                            <div class="stat-icon purple"><i class="fas fa-inbox"></i></div>
+                        </div>
+                        <div class="stat-value" style="color: #10B981;">${overCount}</div>
+                        <div class="stat-label">空缺人数</div>
+                    </div>`;
+            }
+            
+            // 4-7. 各编制类型卡片
+            Object.entries(HEADCOUNT_TYPES).forEach(([key, cfg]) => {
+                const count = typeStats[key] || 0;
+                if (totalCurrent > 0) {
+                    const pct = Math.round((count / totalCurrent) * 100);
+                    cardsHtml += `
+                        <div class="stat-card clickable" onclick="showDetailModal('current')" style="border-color: ${cfg.color}30;">
+                            <div class="stat-header">
+                                <div class="stat-icon" style="background: ${cfg.bg}; color: ${cfg.color};">
+                                    <i class="fas fa-user-tag"></i>
+                                </div>
+                                <span class="stat-trend neutral" style="font-size:11px;">${pct}%</span>
+                            </div>
+                            <div class="stat-value" style="color: ${cfg.color};">${count}</div>
+                            <div class="stat-label">${cfg.label}人员</div>
+                        </div>`;
+                }
+            });
+            
+            container.innerHTML = cardsHtml;
+        }
+
+        // 更新统计数据（兼容旧接口）
         function updateStats() {
             // 重新计算并更新统计卡片
             const totalCurrent = departments.reduce((sum, d) => sum + d.current, 0);
