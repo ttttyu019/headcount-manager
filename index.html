@@ -1367,6 +1367,9 @@
                         <p class="page-subtitle">配置各部门编制上限与人员分配</p>
                     </div>
                     <div class="header-actions">
+                        <button class="btn btn-outline" onclick="showImportModal('department')">
+                            <i class="fas fa-file-import"></i> 导入部门编制
+                        </button>
                         <button class="btn btn-primary" onclick="alert('新增部门功能开发中')">
                             <i class="fas fa-plus"></i> 新增部门
                         </button>
@@ -1496,7 +1499,7 @@
                     <i class="fas fa-cloud-upload-alt"></i>
                 </div>
                 <p class="upload-text">点击或拖拽文件到此处上传</p>
-                <p class="upload-hint">支持 Excel (.xlsx, .xls) 和 CSV 格式</p>
+                <p class="upload-hint" id="uploadHintText">支持 Excel (.xlsx, .xls) 和 CSV 格式</p>
             </div>
             
             <!-- 模板下载 -->
@@ -2248,9 +2251,13 @@
         let currentImportType = 'personnel';
         let importedDataCache = null;
 
-        function showImportModal() {
+        function showImportModal(defaultType) {
             document.getElementById('importModal').classList.add('active');
             resetImportState();
+            // 如果指定了默认类型，自动切换到对应tab
+            if (defaultType && ['personnel', 'department', 'dynamics'].includes(defaultType)) {
+                switchImportType(defaultType);
+            }
         }
 
         function resetImportState() {
@@ -2265,6 +2272,18 @@
             document.querySelectorAll('.import-type-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.type === type);
             });
+            
+            // 更新上传提示文字
+            const hints = {
+                personnel: '支持 Excel (.xlsx, .xls) 和 CSV 格式 | 必填：工号、姓名、部门',
+                department: '支持 Excel (.xlsx, .xls) 和 CSV 格式 | 必填：部门名称、编制上限',
+                dynamics: '支持 Excel (.xlsx, .xls) 和 CSV 格式 | 必填：类型、标题、日期'
+            };
+            const hintEl = document.getElementById('uploadHintText');
+            if (hintEl) {
+                hintEl.textContent = hints[type] || '支持 Excel (.xlsx, .xls) 和 CSV 格式';
+            }
+            
             resetImportState();
         }
 
