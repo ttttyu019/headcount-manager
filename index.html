@@ -1051,6 +1051,12 @@
                         <span>导出数据</span>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showClearConfirm()" style="color: #EF4444;">
+                        <i class="fas fa-trash-alt"></i>
+                        <span>清空数据</span>
+                    </a>
+                </li>
             </ul>
         </aside>
 
@@ -2461,6 +2467,54 @@
             } catch (error) {
                 alert('导入失败：' + error.message);
             }
+        }
+
+        // ==================== 数据清空功能 ====================
+        function showClearConfirm() {
+            const count = personnel.length + departments.length + timelineData.length;
+            if (count === 0) {
+                alert('当前没有导入的数据可清空');
+                return;
+            }
+            if (confirm(
+                '⚠️ 确认清空所有数据？\n\n' +
+                '将清除以下内容：\n' +
+                '• 人员数据：' + personnel.length + ' 条\n' +
+                '• 部门编制：' + departments.length + ' 个部门\n' +
+                '• 人员动态：' + timelineData.length + ' 条\n\n' +
+                '⚠️ 此操作不可恢复！建议先导出备份。'
+            )) {
+                clearAllData();
+            }
+        }
+
+        function clearAllData() {
+            // 清空导入的数据数组
+            personnel.length = 0;
+            timelineData.length = 0;
+
+            // 部门保留默认模板（不全部清空，否则页面会空白）
+            // 只重置为初始状态
+            const defaultDepts = [
+                { name: '研发部', icon: 'fa-code', color: '#3B82F6', current: 0, limit: 45, leader: '' },
+                { name: '美术部', icon: 'fa-palette', color: '#EC4899', current: 0, limit: 35, leader: '' },
+                { name: '策划部', icon: 'fa-lightbulb', color: '#F59E0B', current: 0, limit: 28, leader: '' },
+                { name: '测试部', icon: 'fa-bug', color: '#10B981', current: 0, limit: 20, leader: '' },
+                { name: '运营部', icon: 'fa-bullhorn', color: '#8B5CF6', current: 0, limit: 15, leader: '' },
+                { name: '行政部', icon: 'fa-building', color: '#6B7280', current: 0, limit: 10, leader: '' }
+            ];
+            departments.length = 0;
+            defaultDepts.forEach(d => departments.push(d));
+
+            // 刷新所有视图
+            renderPersonnelTable();
+            renderDeptTable();
+            renderDepartmentTable();
+            renderTimeline();
+            renderActivityList();
+            updateStats();
+
+            alert('✅ 所有数据已清空！页面已恢复为初始状态。');
         }
 
         // ==================== 周报生成功能 ====================
